@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Literal
 from datetime import datetime, timezone, timedelta
 
-from emergentintegrations.llm.chat import LlmChat, UserMessage
+import anthropic
 from reminders import start_scheduler, stop_scheduler, generate_reminders
 from personality import all_questions, score_answers, get_result, TYPES
 
@@ -399,13 +399,14 @@ async def log_ai_usage(user_id: str, kind: str):
 
 
 async def call_claude(system_msg: str, user_msg: str) -> str:
-    chat = LlmChat(
-        api_key=EMERGENT_LLM_KEY,
-        session_id=f"dashcareer_{uuid.uuid4().hex[:8]}",
-        system_message=system_msg,
-    ).with_model("anthropic", "claude-sonnet-4-5-20250929")
-    response = await chat.send_message(UserMessage(text=user_msg))
-    return response
+    client = anthropic.AsyncAnthropic(api_key=EMERGENT_LLM_KEY)
+    message = await client.messages.create(
+        model="claude-sonnet-4-5",
+        max_tokens=2048,
+        system=system_msg,
+        messages=[{"role": "user", "content": user_msg}],
+    )
+    return message.content[0].text
 
 
 @api_router.post("/ai/optimize-resume")
