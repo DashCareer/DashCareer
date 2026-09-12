@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Check, Clock3, RefreshCw, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { startGumroadCheckoutAction } from "@/app/actions";
 import { signInPath, getCurrentUser } from "@/app/auth-session";
@@ -8,6 +9,7 @@ const free = ["All 26 subject hubs", "First 3 curriculum areas per subject", "To
 const pro = ["Access to all current curriculum outlines and draft cards", "Six exam-board views and official specification links", "Step-by-step walkthroughs and worked approaches", "Model-answer structures and exam technique", "Formula sheets, common mistakes and memory boosters", "Private document uploads", "DashAI Study Studio"];
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Pricing", description: "Compare DashCareer Free and Pro A-Level revision features." };
 
 function CheckoutButton({ plan, featured }: { plan: "monthly" | "annual"; featured?: boolean }) {
   return <form action={startGumroadCheckoutAction} className="checkout-form"><input type="hidden" name="plan" value={plan} /><button className={`button ${featured ? "primary" : "secondary"}`} type="submit">Choose {plan} <Zap size={17} /></button></form>;

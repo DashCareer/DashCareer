@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Clock3 } from "lucide-react";
 import { getCurrentUser, signInPath } from "@/app/auth-session";
@@ -10,6 +11,14 @@ import { PinSubjectButton } from "@/components/subject-browser";
 
 export const dynamic = "force-dynamic";
 export function generateStaticParams() { return subjects.map((subject) => ({ slug: subject.slug })); }
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const subject = getSubject((await params).slug);
+  if (!subject) return { title: "Subject not found", robots: { index: false, follow: false } };
+  return {
+    title: `A-Level ${subject.name} Revision`,
+    description: `Revise A-Level ${subject.name} with topic outlines, study tools, progress tracking and official exam-board links.`,
+  };
+}
 
 function subjectForAccess(subject: Subject, isPro: boolean): Subject {
   if (isPro) return subject;
