@@ -12,9 +12,13 @@ function field(form: FormData, ...names: string[]) {
   return "";
 }
 function planFor(form: FormData): "monthly" | "annual" | null {
-  const product = [field(form, "product_permalink"), field(form, "product_id"), field(form, "short_product_id"), field(form, "product_name"), field(form, "product_url")].join(" ").toLowerCase();
-  if (/atypnn|dashcareer\s+membership\s+annual|\bannual\b/.test(product)) return "annual";
-  if (/irrlrl|dashcareer\s+membership\s+monthly|\bmonthly\b/.test(product)) return "monthly";
+  const ids = [field(form, "product_permalink"), field(form, "short_product_id")];
+  try {
+    const url = new URL(field(form, "product_url"));
+    if (url.hostname === "cagdasozturk.gumroad.com") ids.push(url.pathname.replace(/^\/l\//, ""));
+  } catch { /* Product URLs are optional. */ }
+  if (ids.includes("atypnn")) return "annual";
+  if (ids.includes("irrlrl")) return "monthly";
   return null;
 }
 function readToken(form: FormData) {
@@ -37,7 +41,7 @@ async function digest(value: string) {
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
   const url = new URL(req.url);
-  if (url.searchParams.get("secret") !== WEBHOOK_SECRET) return new Response(JSON.stringify({ error: "Unauthorised" }), { status: 401, headers });
+  if (!WEBHOOK_SECRET || url.searchParams.get("secret") !== WEBHOOK_SECRET) return new Response(JSON.stringify({ error: "Unauthorised" }), { status: 401, headers });
   let form: FormData;
   try { form = await req.formData(); } catch { return new Response(JSON.stringify({ error: "Invalid notification" }), { status: 400, headers }); }
 
@@ -56,6 +60,7 @@ Deno.serve(async (req: Request) => {
     || truthy("refunded") || truthy("disputed") || truthy("chargebacked") || Boolean(field(form, "subscription_ended_at"));
   const status = inactive ? "inactive" : "active";
   const purchaseId = field(form, "sale_id", "id", "purchase_id", "subscription_id") || null;
+  if (!purchaseId) return new Response(JSON.stringify({ error: "Missing purchase reference" }), { status: 400, headers });
   const token = readToken(form);
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
