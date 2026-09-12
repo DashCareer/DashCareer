@@ -57,8 +57,17 @@ Deno.serve(async (req: Request) => {
   const eventName = (url.searchParams.get("event") || field(form, "resource_name", "event", "type") || "sale").toLowerCase();
   if (!["sale", "refund", "cancellation", "subscription_ended", "dispute", "dispute_won", "subscription_updated", "subscription_restarted"].includes(eventName)) return new Response(JSON.stringify({ accepted: true, linked: false, reason: "unsupported-event" }), { headers });
   const truthy = (name: string) => ["true", "1", "yes"].includes(field(form, name).toLowerCase());
-  const inactive = ["refund", "cancellation", "subscription_ended", "dispute"].includes(eventName)
-    || truthy("refunded") || truthy("disputed") || truthy("chargebacked") || Boolean(field(form, "subscription_ended_at"));
+  const paidThrough = field(form, "subscription_ended_at", "ended_at") || null;
+  const paidThroughTime = paidThrough ? Date.parse(paidThrough) : Number.NaN;
+  // A cancellation stops renewal, but access remains active until Gumroad's
+  // supplied membership end date. Refunds, disputes, and ended memberships
+  // revoke access immediately.
+  const cancellationHasEnded = eventName === "cancellation"
+    && (!Number.isFinite(paidThroughTime) || paidThroughTime <= Date.now());
+  const inactive = ["refund", "subscription_ended", "dispute"].includes(eventName)
+    || cancellationHasEnded
+    || truthy("refunded") || truthy("disputed") || truthy("chargebacked")
+    || (eventName !== "cancellation" && Boolean(field(form, "subscription_ended_at")));
   const status = inactive ? "inactive" : "active";
   const purchaseId = field(form, "sale_id", "id", "purchase_id", "subscription_id") || null;
   if (!purchaseId) return new Response(JSON.stringify({ error: "Missing purchase reference" }), { status: 400, headers });
@@ -89,7 +98,9 @@ Deno.serve(async (req: Request) => {
     user_id: account.user_id, plan, status,
     product_permalink: plan === "annual" ? "atypnn" : "irrlrl",
     purchase_id: purchaseId, license_key_hash: eventKey,
-    expires_at: inactive ? new Date().toISOString() : null,
+    expires_at: eventName === "cancellation" && paidThrough
+      ? new Date(paidThroughTime).toISOString()
+      : inactive ? new Date().toISOString() : null,
     updated_at: new Date().toISOString()
   }, { onConflict: "user_id" });
   if (membershipWrite.error) return new Response(JSON.stringify({ error: "Could not update membership" }), { status: 500, headers });

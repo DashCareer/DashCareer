@@ -29,8 +29,21 @@ refund.set("subscription_ended_at", "2026-09-30T12:00:00Z");
 assert.equal(purchaseIsInactive("refund", refund), true);
 assert.equal(readExpiry(refund), "2026-09-30T12:00:00Z");
 
+const cancelled = new FormData();
+cancelled.set("subscription_ended_at", "2099-09-30T12:00:00Z");
+cancelled.set("cancelled_at", "2026-09-12T12:00:00Z");
+assert.equal(purchaseIsInactive("cancellation", cancelled), false);
+assert.equal(readExpiry(cancelled), "2099-09-30T12:00:00Z");
+
+const endedCancellation = new FormData();
+endedCancellation.set("subscription_ended_at", "2000-01-01T00:00:00Z");
+assert.equal(purchaseIsInactive("cancellation", endedCancellation), true);
+
+const cancellationWithoutEnd = new FormData();
+assert.equal(purchaseIsInactive("cancellation", cancellationWithoutEnd), true);
+
 const unknown = new FormData();
 unknown.set("product_name", "Another product");
 assert.equal(identifyPlan(unknown), null);
 
-console.log("Payment-flow parser: 16 assertions passed");
+console.log("Payment-flow parser: 21 assertions passed");
