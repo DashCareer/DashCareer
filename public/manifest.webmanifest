@@ -1,0 +1,12 @@
+{
+  "name": "DashCareer Revision",
+  "short_name": "DashCareer",
+  "description": "A-Level revision, study planning and progress tracking.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0a1433",
+  "theme_color": "#6757d8",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

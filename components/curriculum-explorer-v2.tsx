@@ -1,0 +1,54 @@
+"use client";
+
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { AlertTriangle, BookMarked, BrainCircuit, CheckCircle2, ExternalLink, Fingerprint, KeyRound, Lightbulb, ListChecks, LockKeyhole, Network, Sigma, Sparkles, Target } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { examBoards, getExamBoard, getFormulaSheet, type ExamBoardId } from "@/lib/exam-boards";
+import { getBoardCurriculum } from "@/lib/board-curricula";
+import type { Subject, Topic } from "@/lib/subjects";
+
+function GlossaryChips({ topic }: { topic: Topic }) {
+  const terms = topic.title.split(/\s+/).filter((word) => word.length > 3).slice(0, 3);
+  return <div className="inline-glossary" aria-label="Interactive glossary">{terms.map((term) => <HoverCard key={term} openDelay={120}>
+    <HoverCardTrigger asChild><button type="button">{term}</button></HoverCardTrigger>
+    <HoverCardContent className="glossary-popover"><b>{term}</b><p>{topic.keyConcept}</p><small>Topic-linked definition</small></HoverCardContent>
+  </HoverCard>)}</div>;
+}
+
+export function CurriculumExplorerV2({ subject, isPro, boardId, onBoardChange, initialTopic }: { subject: Subject; isPro: boolean; boardId: ExamBoardId; onBoardChange: (board: ExamBoardId) => void; initialTopic?: string }) {
+  const [query, setQuery] = useState("");
+  const board = getExamBoard(boardId);
+  const pathway = useMemo(() => getBoardCurriculum(subject, boardId), [boardId, subject]);
+  const formulae = getFormulaSheet(subject.slug);
+  const topics = useMemo(() => pathway.topics.filter((topic) => `${topic.title} ${topic.summary}`.toLowerCase().includes(query.toLowerCase().trim())), [pathway.topics, query]);
+
+  return <section className="curriculum-explorer" aria-labelledby="curriculum-title">
+    <div className="curriculum-toolbar">
+      <div><p className="tool-kicker"><BookMarked size={16} /> Exam-board pathway</p><h2 id="curriculum-title">{subject.name} curriculum map</h2><p>Choose your board to change the topic pathway and open its current official specification.</p></div>
+      <div className="board-controls"><label>Exam board<NativeSelect value={boardId} onChange={(event) => { onBoardChange(event.target.value as ExamBoardId); setQuery(""); }}>{examBoards.map((item) => <NativeSelectOption value={item.id} key={item.id}>{item.name} · {item.region}</NativeSelectOption>)}</NativeSelect></label><a className="button secondary small" href={board.specificationUrl} target="_blank" rel="noreferrer">Official specification <ExternalLink size={16} /></a></div>
+    </div>
+    <div className="board-banner" style={{ "--board-colour": board.colour } as React.CSSProperties}><span>{board.name}</span><div><b>{pathway.topics.length} curriculum areas · {pathway.code}</b><small>{pathway.status === "board-mapped" ? "This selection has a board-specific topic structure." : "A board-specific audit is pending; this selection currently shows the cross-board overview."}</small></div><a href={board.papersUrl} target="_blank" rel="noreferrer">Past papers <ExternalLink size={14} /></a></div>
+    <label className="curriculum-search"><span className="sr-only">Search curriculum topics</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Search ${subject.name} topics…`} /></label>
+    <Accordion type="multiple" defaultValue={initialTopic && isPro ? [initialTopic] : undefined} className="curriculum-list">
+      {topics.map((topic) => {
+        const topicIndex = pathway.topics.findIndex((entry) => entry.slug === topic.slug);
+        const locked = topicIndex >= 3 && !isPro;
+        return <AccordionItem id={`topic-${topic.slug}`} value={topic.slug} key={topic.slug} className={locked ? "locked" : ""}>
+          <AccordionTrigger disabled={locked}><span className={`difficulty ${topic.difficulty.toLowerCase()}`}>{topic.difficulty}</span><span className="curriculum-topic-title"><b>{topic.title}</b><small>{board.name} pathway · Topic {String(topicIndex + 1).padStart(2, "0")}</small></span>{locked && <span className="pro-lock"><LockKeyhole size={14} /> Pro</span>}</AccordionTrigger>
+          <AccordionContent>{locked ? null : <div className="learning-pack">
+            <article className="learning-summary"><p className="tool-kicker"><Sparkles size={15} /> Topic summary</p><p>{topic.summary}</p><GlossaryChips topic={topic} /></article>
+            <article className="spec-breakdown"><div><Fingerprint size={18} /><span><h3>Specification focus</h3><small>DashCareer study breakdown · check the official specification wording</small></span></div><ol>{topic.specPoints.map((point, index) => <li key={point}><span>{String(index + 1).padStart(2, "0")}</span>{point}</li>)}</ol></article>
+            <div className="learning-grid"><article><ListChecks /><h3>Step-by-step</h3><ol>{topic.walkthrough.map((step) => <li key={step}>{step}</li>)}</ol></article><article><Target /><h3>Worked approach</h3><p>{topic.workedExample}</p></article><article><KeyRound /><h3>Key concept</h3><p>{topic.keyConcept}</p></article><article><Network /><h3>Real-world link</h3><p>{topic.realWorld}</p></article><article><AlertTriangle /><h3>Common mistake</h3><p>{topic.commonMistake}</p></article><article><Lightbulb /><h3>Memory booster</h3><p>{topic.memoryBooster}</p></article><article><BrainCircuit /><h3>Exam technique</h3><p>{topic.examTechnique}</p></article><article><CheckCircle2 /><h3>Model-answer structure</h3><p>{topic.modelAnswer}</p></article></div>
+          </div>}</AccordionContent>
+        </AccordionItem>;
+      })}
+    </Accordion>
+    {!topics.length && <p className="empty-state">No topics match that search.</p>}
+    {!isPro && <div className="curriculum-upgrade"><LockKeyhole size={20} /><div><b>Free access includes the first three curriculum areas.</b><p>Pro unlocks the complete mapped pathway, worked approaches, model-answer structures, formula sheets and advanced study tools.</p></div><Link className="button primary small" href="/pricing">See Pro access</Link></div>}
+    {formulae.length > 0 && <section className={isPro ? "formula-sheet" : "formula-sheet locked-sheet"}><div><p className="tool-kicker"><Sigma size={16} /> Formula sheet</p><h3>{subject.name} essentials</h3></div>{isPro ? <ul>{formulae.map((formula) => <li key={formula}>{formula}</li>)}</ul> : <p><LockKeyhole size={16} /> Formula sheets are included with Pro.</p>}</section>}
+    <div className="curriculum-caution"><AlertTriangle size={17} /><p><b>{pathway.status === "board-mapped" ? "Mapped pathway:" : "Coverage gap:"}</b> {pathway.status === "board-mapped" ? "topic headings change with the selected board. Confirm optional units and the specification edition used by your school." : "this subject-board pair has not completed its board-specific audit, so DashCareer shows the cross-board revision map without pretending it is an exact specification."}</p></div>
+  </section>;
+}
