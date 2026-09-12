@@ -54,7 +54,7 @@ export function StudyTimerProvider({ children, signedIn }: { children: React.Rea
 
   useEffect(() => {
     if (!ready) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* Timer remains usable when browser storage is unavailable. */ }
   }, [ready, state]);
 
   useEffect(() => {
@@ -70,8 +70,10 @@ export function StudyTimerProvider({ children, signedIn }: { children: React.Rea
     completing.current = true;
     const finished = state;
     setState((current) => ({ ...current, running: false, endAt: null, remaining: 0, cycles: current.cycles + 1 }));
-    if (signedIn && localStorage.getItem(LAST_LOGGED_KEY) !== finished.sessionId) {
-      localStorage.setItem(LAST_LOGGED_KEY, finished.sessionId);
+    let alreadyLogged = false;
+    try { alreadyLogged = localStorage.getItem(LAST_LOGGED_KEY) === finished.sessionId; } catch { /* Browser storage may be disabled. */ }
+    if (signedIn && !alreadyLogged) {
+      try { localStorage.setItem(LAST_LOGGED_KEY, finished.sessionId); } catch { /* In-memory completion guard still applies. */ }
       const data = new FormData(); data.set("subject", finished.subject); data.set("minutes", String(finished.minutes));
       startTransition(() => logStudySessionAction(data));
     }
@@ -88,7 +90,7 @@ export function StudyTimerProvider({ children, signedIn }: { children: React.Rea
     toggle() {
       setState((current) => current.running
         ? { ...current, running: false, endAt: null, remaining: Math.max(0, current.endAt ? Math.ceil((current.endAt - Date.now()) / 1000) : current.remaining) }
-        : { ...current, running: true, endAt: Date.now() + current.remaining * 1000, sessionId: current.remaining === current.minutes * 60 ? freshId() : current.sessionId });
+        : { ...current, running: true, remaining: current.remaining > 0 ? current.remaining : current.minutes * 60, endAt: Date.now() + (current.remaining > 0 ? current.remaining : current.minutes * 60) * 1000, sessionId: current.remaining <= 0 || current.remaining === current.minutes * 60 ? freshId() : current.sessionId });
     },
     reset() { setState((current) => ({ ...current, remaining: current.minutes * 60, running: false, endAt: null, sessionId: freshId() })); },
   }), [saving, state]);
