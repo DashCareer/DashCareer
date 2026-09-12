@@ -5,13 +5,13 @@ import { webcrypto } from 'node:crypto';
 import ts from 'typescript';
 
 const code = ts.transpileModule(readFileSync('supabase/functions/gumroad-webhook/index.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
-function receiver({ secret = 'test-secret', linked = true, failMembership = false } = {}) {
+function receiver({ secret = 'test-secret', linked = true, failMembership = false, failLookup = false } = {}) {
   let handle;
   const writes = [];
   const db = { from(table) {
     return {
       select() { return this; }, eq() { return this; },
-      async maybeSingle() { return { data: linked ? { user_id: 'fixture-user', email: 'student@example.test' } : null }; },
+      async maybeSingle() { return { data: linked ? { user_id: 'fixture-user', email: 'student@example.test' } : null, error: failLookup ? { message: 'lookup failed' } : null }; },
       async upsert(row) { writes.push({ table, row }); return { error: table === 'memberships' && failMembership ? { message: 'database failure' } : null }; },
       update() { return this; },
     };
@@ -40,4 +40,6 @@ for (const [product, plan] of [['irrlrl', 'monthly'], ['atypnn', 'annual']]) {
 const unlinked = receiver({ linked: false }); assert.equal((await (await unlinked.send()).json()).linked, false); assert.equal(unlinked.writes.some(w => w.table === 'memberships'), false); checks++;
 const refunded = receiver(); await refunded.send({ refunded: 'true' }); assert.equal(refunded.writes.find(w => w.table === 'memberships').row.status, 'inactive'); checks++;
 const failure = receiver({ failMembership: true }); assert.equal((await failure.send()).status, 500); checks++;
+const lookupFailure = receiver({ failLookup: true }); assert.equal((await lookupFailure.send()).status, 500); assert.equal(lookupFailure.writes.length, 0); checks++;
+const unsupported = receiver(); assert.equal((await (await unsupported.send({ event: 'unknown-event' })).json()).reason, 'unsupported-event'); assert.equal(unsupported.writes.length, 0); checks++;
 console.log(`PASS: ${checks} actual webhook handler scenarios using an isolated fake database; no charges or live membership writes`);

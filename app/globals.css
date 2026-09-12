@@ -367,7 +367,13 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .back-link { display: inline-flex; width: max-content; align-items: center; gap: 8px; color: var(--muted-foreground); font-weight: 750; }
 .auth-card { padding: clamp(22px, 4vw, 42px); border: 1px solid var(--border); border-radius: 28px; background: color-mix(in srgb, var(--card) 94%, transparent); box-shadow: 0 28px 80px rgb(20 25 65 / 14%); }
 .auth-card > form:first-of-type { display: flex; justify-content: center; }
-.google-button { width: min(100%, 420px); justify-content: center; border: 1px solid var(--border); background: var(--background); color: var(--foreground); }
+.linkedin-button { width: min(100%, 420px); justify-content: center; border: 1px solid var(--border); background: #0a66c2; color: white; }
+.full-lesson { max-width: 78ch; margin: 0 auto; line-height: 1.8; }
+.full-lesson h4 { font-size: 1.15rem; margin: 2rem 0 .6rem; }
+.full-lesson p, .full-lesson dd { margin-bottom: 1rem; }
+.full-lesson details { margin: .8rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: 12px; }
+.full-lesson summary { cursor: pointer; font-weight: 650; }
+.full-lesson a { text-decoration: underline; color: var(--primary); }
 .auth-divider { display: flex; align-items: center; gap: 14px; margin: 24px 0; color: var(--muted-foreground); font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
 .auth-divider::before, .auth-divider::after { height: 1px; flex: 1; background: var(--border); content: ""; }
 .auth-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }

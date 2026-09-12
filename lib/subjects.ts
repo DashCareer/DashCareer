@@ -1,5 +1,6 @@
 export type Difficulty = "Easy" | "Medium" | "Hard";
 export type Topic = {
+  contentStatus: "outline" | "draft";
   slug: string;
   title: string;
   summary: string;
@@ -21,6 +22,7 @@ export type Subject = { slug: string; name: string; short: string; accent: strin
 const slugify = (value: string) => value.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 export const createTopic = (subject: string, title: string, index: number): Topic => {
   const base: Topic = {
+  contentStatus: "outline",
   slug: slugify(title),
   title,
   summary: `${title} is a core part of ${subject}. Build a precise definition, connect the main ideas, then practise applying them in the style required by your exam board.`,
@@ -39,6 +41,7 @@ export const createTopic = (subject: string, title: string, index: number): Topi
   };
   if (subject === "Psychology" && title === "Issues and Debates") return {
     ...base,
+    contentStatus: "draft",
     summary: "Issues and Debates connects the assumptions behind psychological explanations. It covers gender and cultural bias, free will and determinism, nature and nurture, holism and reductionism, idiographic and nomothetic approaches, and the ethical or socially sensitive consequences of research.",
     walkthrough: ["Name the debate and define both sides precisely.", "Apply each side to a named psychological explanation or study.", "Use evidence to compare the strength of the two positions.", "Reach a balanced conclusion about which position is more useful in the context."],
     workedExample: "For a nature–nurture question, define genetic or biological influences and environmental experience, apply both to a named behaviour, then evaluate interactionism as a reason the two influences should not always be treated separately.",

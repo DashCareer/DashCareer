@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { safeRedirect as safeNext } from "@/lib/safe-redirect";
-import { googleSignInEnabled } from "@/lib/auth-providers";
+import { linkedInSignInEnabled } from "@/lib/auth-providers";
 
 export async function signIn(formData: FormData) {
   const supabase = await createClient();
@@ -29,12 +29,12 @@ export async function signUp(formData: FormData) {
   redirect(data.session ? next : `/login?message=${encodeURIComponent("Check your email to confirm your account")}&next=${encodeURIComponent(next)}`);
 }
 
-export async function signInWithGoogle(formData: FormData) {
-  if (!await googleSignInEnabled()) redirect(`/login?error=${encodeURIComponent("Google sign-in is currently unavailable. Please use email and password.")}&next=${encodeURIComponent(safeNext(formData.get("next")))}`);
+export async function signInWithLinkedIn(formData: FormData) {
+  if (!await linkedInSignInEnabled()) redirect(`/login?error=${encodeURIComponent("LinkedIn sign-in is currently unavailable. Please use email and password.")}&next=${encodeURIComponent(safeNext(formData.get("next")))}`);
   const supabase = await createClient();
   const next = safeNext(formData.get("next"));
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const { data, error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}` } });
-  if (error || !data.url) redirect(`/login?error=${encodeURIComponent("Google sign-in is not available yet")}`);
+  const { data, error } = await supabase.auth.signInWithOAuth({ provider: "linkedin_oidc", options: { redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}` } });
+  if (error || !data.url) redirect(`/login?error=${encodeURIComponent("LinkedIn sign-in is not available yet")}`);
   redirect(data.url);
 }

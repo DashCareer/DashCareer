@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/app/auth-session";
 import { getMembership, membershipIsActive } from "@/db/queries";
 import { examBoards, getExamBoard, type ExamBoardId } from "@/lib/exam-boards";
 import { findCurriculumTopic } from "@/lib/board-curricula";
+import { getLesson } from "@/lib/lessons";
 
 type StudyMode = "explain" | "quiz" | "plan";
 
@@ -43,6 +44,13 @@ function localStudyResponse(question: string, subjectSlug: string, boardId: Exam
     return `${match.status === "ambiguous" ? "That question could match more than one topic" : "I could not match that to one exact topic"} in ${subject.name} for ${board.name}. Choose or name one of these: ${choices}. I stopped instead of guessing and mixing topics.`;
   }
   const sourceLine = `${subject.name} · ${board.name} · ${topic.title}`;
+  const lesson = getLesson(subjectSlug, boardId, topic.slug);
+  if (lesson) {
+    if (mode === "quiz") return `${sourceLine}\n\n${lesson.checks.map((item, index) => `${index + 1}. ${item.question}\nAnswer check: ${item.answer}`).join("\n\n")}`;
+    if (mode === "plan") return `${sourceLine}\n\n${lesson.sections.map((section, index) => `${index + 1}. Read and recall: ${section.heading}`).join("\n")}\n\nFinish with the lesson's answer checks. Revisit any section you could not explain without notes.`;
+    return `${sourceLine}\n\n${lesson.introduction}\n\n${lesson.sections.map(section => `${section.heading}\n${section.paragraphs.join("\n\n")}`).join("\n\n")}\n\nSpecification: ${lesson.source}\n${lesson.specification}`;
+  }
+  if (topic.contentStatus === "outline") return `${sourceLine}\n\nI found the topic, but DashCareer currently has only a planning outline for it. A detailed explanation has not been written and reviewed yet. Use your course notes and the official specification linked below; I cannot provide a grounded answer from this outline.`;
   if (mode === "quiz") return `${sourceLine}\n\n${topic.question}\n\nTry this without notes first. Then compare your response with this marking focus:\n${topic.answer}`;
   if (mode === "plan") return `${sourceLine}\n\n1. Recall — write down what you remember for 3 minutes.\n2. Repair — use this focus: ${topic.summary}\n3. Apply — ${topic.workedExample}\n4. Review — ${topic.examTechnique}\n\nFinish by answering: ${topic.question}`;
   return `${sourceLine}\n\n${topic.summary}\n\nKey concept\n${topic.keyConcept}\n\nStep-by-step\n${topic.walkthrough.map((step, index) => `${index + 1}. ${step}`).join("\n")}\n\nWorked approach\n${topic.workedExample}\n\nCommon mistake\n${topic.commonMistake}\n\nCheck your understanding\n${topic.question}`;
@@ -56,7 +64,7 @@ async function connectedResponse(question: string, subjectSlug: string, boardId:
   const subject = getSubject(subjectSlug) ?? subjects[0];
   const board = getExamBoard(boardId);
   const { topic } = findCurriculumTopic(subject, boardId, question);
-  if (!topic) return null;
+  if (!topic || topic.contentStatus === "outline") return null;
   const response = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
@@ -92,13 +100,14 @@ export async function POST(request: Request) {
   if (question.length < 8) return NextResponse.json({ error: "Please add a little more detail." }, { status: 400 });
   const chosenSubject = getSubject(subject) ?? subjects[0];
   const match = findCurriculumTopic(chosenSubject, board, question);
+  const lesson = match.topic ? getLesson(subject, board, match.topic.slug) : undefined;
   let answer: string | null = null;
-  if (match.topic) {
+  if (!lesson && match.topic && match.topic.contentStatus !== "outline") {
     try { answer = await connectedResponse(question, subject, board, mode); } catch { answer = null; }
   }
   return NextResponse.json({
     answer: answer ?? localStudyResponse(question, subject, board, mode),
     engine: answer ? "connected" : "study-core",
-    context: { subject, subjectName: chosenSubject.name, board, boardName: getExamBoard(board).name, topic: match.topic?.title ?? null, topicSlug: match.topic?.slug ?? null, matchStatus: match.status, confidence: Math.round(match.confidence * 100), suggestions: match.suggestions.map((item) => item.title), specPoints: match.topic?.specPoints ?? [], sourceUrl: getExamBoard(board).specificationUrl, pathwayStatus: match.pathway.status, contentStatus: "DashCareer study card · specification verification recommended" },
+    context: { subject, subjectName: chosenSubject.name, board, boardName: getExamBoard(board).name, topic: match.topic?.title ?? null, topicSlug: match.topic?.slug ?? null, matchStatus: match.status, confidence: Math.round(match.confidence * 100), suggestions: match.suggestions.map((item) => item.title), specPoints: match.topic?.specPoints ?? [], sourceUrl: lesson?.source ?? getExamBoard(board).specificationUrl, pathwayStatus: match.pathway.status, contentStatus: lesson ? lesson.specification : match.topic?.contentStatus === "outline" ? "Outline only · lesson not yet available" : "Draft study card · subject and specification review pending" },
   });
 }

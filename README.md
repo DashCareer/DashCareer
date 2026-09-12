@@ -10,7 +10,7 @@ DashCareer is a branded A-Level revision platform built with Next.js, Supabase a
 
 ## Production
 
-Deploy the repository to Vercel and configure the variables listed in `.env.example`. Never commit private AI keys or the Gumroad notification URL. Email/password authentication works through Supabase. Google login additionally requires the Google provider to be enabled in Supabase Auth.
+Deploy the repository to Vercel and configure the variables listed in `.env.example`. Never commit private AI keys or the Gumroad notification URL. Email/password authentication works through Supabase. LinkedIn login requires the LinkedIn OIDC provider and its app credentials in Supabase Auth. The button appears automatically when the provider is enabled.
 
 The two Gumroad product links are already wired into the pricing page. A protected Supabase Edge Function receives purchase notifications and updates membership access without licence keys. The founder must add that private notification URL to Gumroad once before automatic upgrades can operate.
 

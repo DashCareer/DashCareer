@@ -9,8 +9,11 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { examBoards, getExamBoard, getFormulaSheet, type ExamBoardId } from "@/lib/exam-boards";
 import { getBoardCurriculum } from "@/lib/board-curricula";
 import type { Subject, Topic } from "@/lib/subjects";
+import { getLesson } from "@/lib/lessons";
+import { FullLesson } from "@/components/full-lesson";
 
 function GlossaryChips({ topic }: { topic: Topic }) {
+  if (topic.contentStatus === "outline") return null;
   const terms = topic.title.split(/\s+/).filter((word) => word.length > 3).slice(0, 3);
   return <div className="inline-glossary" aria-label="Interactive glossary">{terms.map((term) => <HoverCard key={term} openDelay={120}>
     <HoverCardTrigger asChild><button type="button">{term}</button></HoverCardTrigger>
@@ -34,20 +37,22 @@ export function CurriculumExplorerV2({ subject, isPro, boardId, onBoardChange, i
     <label className="curriculum-search"><span className="sr-only">Search curriculum topics</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Search ${subject.name} topics…`} /></label>
     <Accordion type="multiple" defaultValue={initialTopic && isPro ? [initialTopic] : undefined} className="curriculum-list">
       {topics.map((topic) => {
+        const lesson = getLesson(subject.slug, boardId, topic.slug);
         const topicIndex = pathway.topics.findIndex((entry) => entry.slug === topic.slug);
         const locked = topicIndex >= 3 && !isPro;
         return <AccordionItem id={`topic-${topic.slug}`} value={topic.slug} key={topic.slug} className={locked ? "locked" : ""}>
           <AccordionTrigger disabled={locked}><span className={`difficulty ${topic.difficulty.toLowerCase()}`}>{topic.difficulty}</span><span className="curriculum-topic-title"><b>{topic.title}</b><small>{board.name} pathway · Topic {String(topicIndex + 1).padStart(2, "0")}</small></span>{locked && <span className="pro-lock"><LockKeyhole size={14} /> Pro</span>}</AccordionTrigger>
           <AccordionContent>{locked ? null : <div className="learning-pack">
-            <article className="learning-summary"><p className="tool-kicker"><Sparkles size={15} /> Topic summary</p><p>{topic.summary}</p><GlossaryChips topic={topic} /></article>
-            <article className="spec-breakdown"><div><Fingerprint size={18} /><span><h3>Specification focus</h3><small>DashCareer study breakdown · check the official specification wording</small></span></div><ol>{topic.specPoints.map((point, index) => <li key={point}><span>{String(index + 1).padStart(2, "0")}</span>{point}</li>)}</ol></article>
-            <div className="learning-grid"><article><ListChecks /><h3>Step-by-step</h3><ol>{topic.walkthrough.map((step) => <li key={step}>{step}</li>)}</ol></article><article><Target /><h3>Worked approach</h3><p>{topic.workedExample}</p></article><article><KeyRound /><h3>Key concept</h3><p>{topic.keyConcept}</p></article><article><Network /><h3>Real-world link</h3><p>{topic.realWorld}</p></article><article><AlertTriangle /><h3>Common mistake</h3><p>{topic.commonMistake}</p></article><article><Lightbulb /><h3>Memory booster</h3><p>{topic.memoryBooster}</p></article><article><BrainCircuit /><h3>Exam technique</h3><p>{topic.examTechnique}</p></article><article><CheckCircle2 /><h3>Model-answer structure</h3><p>{topic.modelAnswer}</p></article></div>
+            {lesson ? <FullLesson lesson={lesson} /> : <p className="notice">{topic.contentStatus === "outline" ? "Planning outline: detailed teaching content is still being written." : "Draft study card: detailed lesson and specification review pending."}</p>}
+            {!lesson && <article className="learning-summary"><p className="tool-kicker"><Sparkles size={15} /> Topic summary</p><p>{topic.summary}</p><GlossaryChips topic={topic} /></article>}
+            <article className="spec-breakdown" hidden={Boolean(lesson)}><div><Fingerprint size={18} /><span><h3>Specification focus</h3><small>DashCareer study breakdown · check the official specification wording</small></span></div><ol>{topic.specPoints.map((point, index) => <li key={point}><span>{String(index + 1).padStart(2, "0")}</span>{point}</li>)}</ol></article>
+            <div className="learning-grid" hidden={Boolean(lesson)}><article><ListChecks /><h3>Step-by-step</h3><ol>{topic.walkthrough.map((step) => <li key={step}>{step}</li>)}</ol></article><article><Target /><h3>Worked approach</h3><p>{topic.workedExample}</p></article><article><KeyRound /><h3>Key concept</h3><p>{topic.keyConcept}</p></article><article><Network /><h3>Real-world link</h3><p>{topic.realWorld}</p></article><article><AlertTriangle /><h3>Common mistake</h3><p>{topic.commonMistake}</p></article><article><Lightbulb /><h3>Memory booster</h3><p>{topic.memoryBooster}</p></article><article><BrainCircuit /><h3>Exam technique</h3><p>{topic.examTechnique}</p></article><article><CheckCircle2 /><h3>Model-answer structure</h3><p>{topic.modelAnswer}</p></article></div>
           </div>}</AccordionContent>
         </AccordionItem>;
       })}
     </Accordion>
     {!topics.length && <p className="empty-state">No topics match that search.</p>}
-    {!isPro && <div className="curriculum-upgrade"><LockKeyhole size={20} /><div><b>Free access includes the first three curriculum areas.</b><p>Pro unlocks the complete mapped pathway, worked approaches, model-answer structures, formula sheets and advanced study tools.</p></div><Link className="button primary small" href="/pricing">See Pro access</Link></div>}
+    {!isPro && <div className="curriculum-upgrade"><LockKeyhole size={20} /><div><b>Free access includes the first three curriculum areas.</b><p>Pro unlocks the current library and advanced study tools. Detailed lessons are still being added; outlines are labelled.</p></div><Link className="button primary small" href="/pricing">See Pro access</Link></div>}
     {formulae.length > 0 && <section className={isPro ? "formula-sheet" : "formula-sheet locked-sheet"}><div><p className="tool-kicker"><Sigma size={16} /> Formula sheet</p><h3>{subject.name} essentials</h3></div>{isPro ? <ul>{formulae.map((formula) => <li key={formula}>{formula}</li>)}</ul> : <p><LockKeyhole size={16} /> Formula sheets are included with Pro.</p>}</section>}
     <div className="curriculum-caution"><AlertTriangle size={17} /><p><b>{pathway.status === "board-mapped" ? "Mapped pathway:" : "Coverage gap:"}</b> {pathway.status === "board-mapped" ? "topic headings change with the selected board. Confirm optional units and the specification edition used by your school." : "this subject-board pair has not completed its board-specific audit, so DashCareer shows the cross-board revision map without pretending it is an exact specification."}</p></div>
   </section>;

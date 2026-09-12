@@ -5,7 +5,7 @@ import { signInPath, getCurrentUser } from "@/app/auth-session";
 import { getMembership, membershipIsActive } from "@/db/queries";
 
 const free = ["All 26 subject hubs", "First 3 curriculum areas per subject", "Topic summaries and revision checklists", "Practice quizzes and flashcards", "Progress dashboard and persistent Pomodoro"];
-const pro = ["Complete mapped curriculum pathways", "Six exam-board views and official specification links", "Step-by-step walkthroughs and worked approaches", "Model-answer structures and exam technique", "Formula sheets, common mistakes and memory boosters", "Private document uploads", "DashAI Study Studio"];
+const pro = ["Access to all current curriculum outlines and draft cards", "Six exam-board views and official specification links", "Step-by-step walkthroughs and worked approaches", "Model-answer structures and exam technique", "Formula sheets, common mistakes and memory boosters", "Private document uploads", "DashAI Study Studio"];
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +27,7 @@ export default async function PricingPage() {
 
   return (
     <main className="shell page-space pricing-page">
-      <div className="page-intro centered"><p className="eyebrow"><Sparkles size={14} /> Clear access levels</p><h1>Revise free. Go further with Pro.</h1><p>The essential study loop stays free. Pro adds complete mapped pathways and advanced tools.</p></div>
+      <div className="page-intro centered"><p className="eyebrow"><Sparkles size={14} /> Clear access levels</p><h1>Revise free. Go further with Pro.</h1><p>The essential study loop stays free. Pro adds advanced tools and access to the current library. Detailed lessons and specification reviews are still in progress.</p></div>
       {active && <div className="notice success"><Check size={18} /> Pro is active on this account. Every advanced study tool is unlocked.</div>}
       <div className="pricing-grid access-pricing">
         <article className="price-card"><div className="access-label">Free</div><p>Core revision</p><h2>£0</h2><span>A useful study workspace without a card.</span><ul>{free.map((item) => <li key={item}><Check size={17} /> {item}</li>)}</ul><Link className="button secondary" href="/subjects">Start free</Link></article>

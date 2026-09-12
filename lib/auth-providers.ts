@@ -1,6 +1,6 @@
 import "server-only";
 
-export async function googleSignInEnabled(): Promise<boolean> {
+export async function linkedInSignInEnabled(): Promise<boolean> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key) return false;
@@ -10,6 +10,6 @@ export async function googleSignInEnabled(): Promise<boolean> {
     });
     if (!response.ok) return false;
     const settings = await response.json();
-    return settings.external?.google === true;
+    return settings.external?.linkedin_oidc === true;
   } catch { return false; }
 }

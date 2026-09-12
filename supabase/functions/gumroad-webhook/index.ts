@@ -55,6 +55,7 @@ Deno.serve(async (req: Request) => {
   if (!email || !plan) return new Response(JSON.stringify({ accepted: true, linked: false, reason: "unrecognised-purchase" }), { headers });
 
   const eventName = (url.searchParams.get("event") || field(form, "resource_name", "event", "type") || "sale").toLowerCase();
+  if (!["sale", "refund", "cancellation", "subscription_ended", "dispute", "dispute_won", "subscription_updated", "subscription_restarted"].includes(eventName)) return new Response(JSON.stringify({ accepted: true, linked: false, reason: "unsupported-event" }), { headers });
   const truthy = (name: string) => ["true", "1", "yes"].includes(field(form, name).toLowerCase());
   const inactive = ["refund", "cancellation", "subscription_ended", "dispute"].includes(eventName)
     || truthy("refunded") || truthy("disputed") || truthy("chargebacked") || Boolean(field(form, "subscription_ended_at"));
@@ -66,11 +67,13 @@ Deno.serve(async (req: Request) => {
 
   let account: { user_id: string; email?: string } | null = null;
   if (token) {
-    const { data } = await supabase.from("checkout_sessions").select("user_id,email").eq("token", token).maybeSingle();
+    const { data, error } = await supabase.from("checkout_sessions").select("user_id,email").eq("token", token).maybeSingle();
+    if (error) return new Response(JSON.stringify({ error: "Account lookup temporarily unavailable" }), { status: 500, headers });
     if (data && String(data.email).toLowerCase() === email) account = data;
   }
   if (!account) {
-    const { data } = await supabase.from("checkout_accounts").select("user_id,email").eq("email", email).maybeSingle();
+    const { data, error } = await supabase.from("checkout_accounts").select("user_id,email").eq("email", email).maybeSingle();
+    if (error) return new Response(JSON.stringify({ error: "Account lookup temporarily unavailable" }), { status: 500, headers });
     account = data;
   }
 
