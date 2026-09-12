@@ -51,13 +51,17 @@ export function readEventName(requestUrl: string, form: FormData) {
 }
 
 export function purchaseIsInactive(eventName: string, form: FormData) {
-  return ["refund", "cancellation", "subscription_ended", "dispute"].includes(eventName)
+  const expiry = readExpiry(form);
+  const cancellationHasEnded = eventName === "cancellation"
+    && (!expiry || !Number.isFinite(Date.parse(expiry)) || Date.parse(expiry) <= Date.now());
+  return ["refund", "subscription_ended", "dispute"].includes(eventName)
+    || cancellationHasEnded
     || truthy(form.get("refunded"))
     || truthy(form.get("disputed"))
     || truthy(form.get("chargebacked"))
-    || Boolean(field(form, "subscription_ended_at"));
+    || (eventName !== "cancellation" && Boolean(field(form, "subscription_ended_at")));
 }
 
 export function readExpiry(form: FormData) {
-  return field(form, "subscription_ended_at", "ended_at", "cancelled_at") || null;
+  return field(form, "subscription_ended_at", "ended_at") || null;
 }

@@ -39,6 +39,17 @@ for (const [product, plan] of [['irrlrl', 'monthly'], ['atypnn', 'annual']]) {
 }
 const unlinked = receiver({ linked: false }); assert.equal((await (await unlinked.send()).json()).linked, false); assert.equal(unlinked.writes.some(w => w.table === 'memberships'), false); checks++;
 const refunded = receiver(); await refunded.send({ refunded: 'true' }); assert.equal(refunded.writes.find(w => w.table === 'memberships').row.status, 'inactive'); checks++;
+const cancelled = receiver(); await cancelled.send({ event: 'cancellation', subscription_ended_at: '2099-09-30T12:00:00Z' }); {
+  const row = cancelled.writes.find(w => w.table === 'memberships').row;
+  assert.equal(row.status, 'active');
+  assert.equal(row.expires_at, '2099-09-30T12:00:00.000Z');
+} checks++;
+const endedCancellation = receiver(); await endedCancellation.send({ event: 'cancellation', subscription_ended_at: '2000-01-01T00:00:00Z' }); {
+  const row = endedCancellation.writes.find(w => w.table === 'memberships').row;
+  assert.equal(row.status, 'inactive');
+  assert.equal(row.expires_at, '2000-01-01T00:00:00.000Z');
+} checks++;
+const cancellationWithoutEnd = receiver(); await cancellationWithoutEnd.send({ event: 'cancellation' }); assert.equal(cancellationWithoutEnd.writes.find(w => w.table === 'memberships').row.status, 'inactive'); checks++;
 const failure = receiver({ failMembership: true }); assert.equal((await failure.send()).status, 500); checks++;
 const lookupFailure = receiver({ failLookup: true }); assert.equal((await lookupFailure.send()).status, 500); assert.equal(lookupFailure.writes.length, 0); checks++;
 const unsupported = receiver(); assert.equal((await (await unsupported.send({ event: 'unknown-event' })).json()).reason, 'unsupported-event'); assert.equal(unsupported.writes.length, 0); checks++;
