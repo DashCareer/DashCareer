@@ -122,14 +122,14 @@ export async function listApprovedCommunityPosts() {
 
 export async function heartbeatCommunityPresence(userId: string, displayName: string, room: string | null) {
   const db = await createClient();
-  const { error } = await db.from("community_presence").upsert({ user_id: userId, display_name: displayName.slice(0, 80), room: room?.slice(0, 80) ?? null, last_seen_at: new Date().toISOString() }, { onConflict: "user_id" });
+  const { error } = await db.from("community_presence").upsert({ user_id: userId, display_name: displayName.slice(0, 80), room: room?.slice(0, 80) ?? null, last_seen_at: new Date().toISOString() }, { onConflict: "user_id" }).abortSignal(AbortSignal.timeout(3_500));
   value(true, error);
 }
 
 export async function listActiveCommunityPresence() {
   const db = await createClient();
   const cutoff = new Date(Date.now() - 90_000).toISOString();
-  const { data, error } = await db.from("community_presence").select("display_name,room,last_seen_at").gte("last_seen_at", cutoff).order("last_seen_at", { ascending: false }).limit(24);
+  const { data, error } = await db.from("community_presence").select("display_name,room,last_seen_at").gte("last_seen_at", cutoff).order("last_seen_at", { ascending: false }).limit(24).abortSignal(AbortSignal.timeout(3_500));
   return value(data, error) as PresenceRow[];
 }
 

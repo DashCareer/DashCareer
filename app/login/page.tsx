@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { safeRedirect } from "@/lib/safe-redirect";
 import { linkedInSignInEnabled } from "@/lib/auth-providers";
 import { ArrowLeft, LockKeyhole, Mail, UserRound } from "lucide-react";
@@ -6,6 +7,7 @@ import { AuthSubmit, PasswordField } from "@/components/auth-controls";
 import { signIn, signInWithLinkedIn, signUp } from "./actions";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Sign in", description: "Sign in to save your DashCareer revision progress, notes and study plans.", robots: { index: false, follow: false } };
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string; message?: string; mode?: string }> }) {
   const params = await searchParams;

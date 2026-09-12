@@ -80,11 +80,11 @@ export function CommunityPresenceProvider({ children, signedIn, currentUserName,
   }, [state.joined]);
 
   useEffect(() => {
-    if (!signedIn) return;
+    if (!signedIn || (!state.panelOpen && !state.joined)) return;
     const initial = window.setTimeout(() => void heartbeat(state.joined), 0);
-    const timer = window.setInterval(() => void heartbeat(state.joined), 30000);
+    const timer = window.setInterval(() => void heartbeat(state.joined), 60000);
     return () => { window.clearTimeout(initial); window.clearInterval(timer); };
-  }, [heartbeat, signedIn, state.joined]);
+  }, [heartbeat, signedIn, state.joined, state.panelOpen]);
 
   useEffect(() => {
     if (pathname !== "/community") return;

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowRight, BookOpenCheck, BrainCircuit, CalendarDays, Clock3, Flame, Target } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { requireUser } from "@/app/auth-session";
@@ -9,6 +10,7 @@ import { DashboardMomentum, DashboardPlanner } from "@/components/dashboard-mome
 import { LearningInsights } from "@/components/learning-insights";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Study dashboard", description: "Track your A-Level revision progress, study time and upcoming tasks.", robots: { index: false, follow: false } };
 
 export default async function DashboardPage() {
   const user = await requireUser("/dashboard");
