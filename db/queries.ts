@@ -176,7 +176,8 @@ export async function getMembership(userId: string) {
   return value(data, error) as MembershipRow | null;
 }
 
-export function membershipIsActive(membership: MembershipRow | null | undefined, email?: string | null) {
+export function membershipIsActive(membership: MembershipRow | null | undefined, email?: string | null, isFounder = false) {
+  if (isFounder) return true;
   const owner = process.env.DASHCAREER_ADMIN_EMAIL?.trim().toLowerCase();
   if (owner && email?.trim().toLowerCase() === owner) return true;
   return Boolean(membership?.status === "active" && (!membership.expires_at || new Date(membership.expires_at).getTime() > Date.now()));

@@ -2,11 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-
-function safeNext(value: FormDataEntryValue | null) {
-  const next = String(value ?? "/dashboard");
-  return next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
-}
+import { safeRedirect as safeNext } from "@/lib/safe-redirect";
 
 export async function signIn(formData: FormData) {
   const supabase = await createClient();

@@ -80,7 +80,7 @@ export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Sign in to use DashAI." }, { status: 401 });
   const membership = await getMembership(user.userId).catch(() => null);
-  if (!membershipIsActive(membership, user.email)) return NextResponse.json({ error: "DashAI is included with Pro." }, { status: 403 });
+  if (!membershipIsActive(membership, user.email, user.isFounder)) return NextResponse.json({ error: "DashAI is included with Pro." }, { status: 403 });
   let body: { question?: unknown; subject?: unknown; board?: unknown; mode?: unknown };
   try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid request." }, { status: 400 }); }
   const question = typeof body.question === "string" ? body.question.trim().slice(0, 1500) : "";

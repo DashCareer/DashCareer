@@ -90,7 +90,7 @@ export async function uploadResourceAction(formData: FormData) {
   if (!allowed.has(file.type)) redirect(`/subjects/${subject}?status=file-invalid#resources`);
   const user = await requireUser(`/subjects/${subject}`);
   const membership = await getMembership(user.userId).catch(() => null);
-  if (!membershipIsActive(membership, user.email)) redirect(`/subjects/${subject}?status=pro-required#resources`);
+  if (!membershipIsActive(membership, user.email, user.isFounder)) redirect(`/subjects/${subject}?status=pro-required#resources`);
   const objectKey = `${user.userId}/${subject}/${crypto.randomUUID()}`;
   const supabase = await createClient();
   const { error: uploadError } = await supabase.storage.from("study-resources").upload(objectKey, file, { contentType: file.type, upsert: false });
@@ -138,6 +138,8 @@ export async function saveQuizResultAction(formData: FormData) {
 export async function startGumroadCheckoutAction(formData: FormData) {
   const plan = formData.get("plan") === "annual" ? "annual" : "monthly";
   const user = await requireUser("/pricing");
+  const membership = await getMembership(user.userId);
+  if (membershipIsActive(membership, user.email, user.isFounder)) redirect("/pricing");
   const checkoutToken = crypto.randomUUID();
   await linkCheckoutAccount(user.userId, user.email);
   await createCheckoutSession(checkoutToken, user.userId, user.email, plan);

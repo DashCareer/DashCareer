@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { safeRedirect } from "@/lib/safe-redirect";
 import { ArrowLeft, LockKeyhole, Mail, UserRound } from "lucide-react";
 import { signIn, signInWithGoogle, signUp } from "./actions";
 
@@ -6,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string; message?: string }> }) {
   const params = await searchParams;
-  const next = params.next?.startsWith("/") ? params.next : "/dashboard";
+  const next = safeRedirect(params.next);
   return <main className="shell page-space auth-page">
     <Link href="/" className="back-link"><ArrowLeft size={16}/> Back to DashCareer</Link>
     <section className="auth-card">

@@ -17,8 +17,8 @@ export default async function PricingPage() {
   const user = await getCurrentUser();
   const owner = Boolean(user && process.env.DASHCAREER_ADMIN_EMAIL && user.email.toLowerCase() === process.env.DASHCAREER_ADMIN_EMAIL.toLowerCase());
   const membership = user ? await getMembership(user.userId).catch(() => null) : null;
-  const active = membershipIsActive(membership, user?.email);
-  const activeLabel = owner && !membership ? "Founder access" : `${membership?.plan === "annual" ? "Annual" : "Monthly"} membership`;
+  const active = membershipIsActive(membership, user?.email, user?.isFounder);
+  const activeLabel = user?.isFounder || owner ? "Founder access · no purchase required" : `${membership?.plan === "annual" ? "Annual" : "Monthly"} membership`;
   const signIn = signInPath("/pricing");
   const purchaseControl = (plan: "monthly" | "annual", featured = false) => active
     ? <Link className={`button ${featured ? "primary" : "secondary"}`} href="/dashboard"><Check size={17} /> Pro is active</Link>

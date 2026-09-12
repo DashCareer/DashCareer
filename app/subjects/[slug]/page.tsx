@@ -25,7 +25,7 @@ export default async function SubjectPage({ params, searchParams }: { params: Pr
     listProgress(user.userId).catch(() => []), listNotes(user.userId, slug).catch(() => []), listTasks(user.userId, slug).catch(() => []), listVocabulary(user.userId, slug).catch(() => []), listResources(user.userId, slug).catch(() => []), getMembership(user.userId).catch(() => null),
   ]) : [[], [], [], [], [], null];
   const completed = progress.filter((row) => row.subject_slug === slug).map((row) => row.topic_slug);
-  const isPro = membershipIsActive(membership, user?.email);
+  const isPro = membershipIsActive(membership, user?.email, user?.isFounder);
   return (
     <main className={`shell page-space subject-page subject-world world-${subject.slug}`} style={{ "--subject-accent": subject.accent } as React.CSSProperties}>
       <Link href="/subjects" className="back-link"><ArrowLeft size={17} /> All subjects</Link>

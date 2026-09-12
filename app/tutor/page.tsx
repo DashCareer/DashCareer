@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 export default async function TutorPage() {
   const user = await getCurrentUser();
   const membership = user ? await getMembership(user.userId).catch(() => null) : null;
-  const isPro = membershipIsActive(membership, user?.email);
+  const isPro = membershipIsActive(membership, user?.email, user?.isFounder);
   return (
     <main className="shell page-space">
       {isPro ? <TutorLauncher /> : (
