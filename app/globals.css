@@ -366,7 +366,21 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .auth-page { display: grid; gap: 22px; max-width: 980px; }
 .back-link { display: inline-flex; width: max-content; align-items: center; gap: 8px; color: var(--muted-foreground); font-weight: 750; }
 .auth-card { padding: clamp(22px, 4vw, 42px); border: 1px solid var(--border); border-radius: 28px; background: color-mix(in srgb, var(--card) 94%, transparent); box-shadow: 0 28px 80px rgb(20 25 65 / 14%); }
-.auth-card > form:first-of-type { display: flex; justify-content: center; }
+.auth-social { display: flex; justify-content: center; }
+.auth-page-simple { max-width: 620px; }
+.auth-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; margin: 24px 0; border-radius: 14px; background: var(--background); border: 1px solid var(--border); }
+.auth-switch a { padding: 12px 8px; border-radius: 10px; text-align: center; font-weight: 750; color: var(--muted-foreground); }
+.auth-switch a[aria-current="page"] { background: var(--card); color: var(--foreground); box-shadow: 0 2px 8px rgb(20 25 65 / 10%); }
+.auth-single .auth-form { padding: 0; border: 0; background: transparent; }
+.auth-help { font-size: .85rem; line-height: 1.6; color: var(--muted-foreground); margin: 18px 0 0; text-align: center; }
+.password-field { display: grid; gap: 8px; }
+.password-input { display: flex; border: 1px solid var(--border); border-radius: 12px; background: var(--card); overflow: hidden; }
+.password-input input { width: 100%; min-width: 0; min-height: 46px; padding: 0 13px; background: transparent; border: 0; color: var(--foreground); }
+.password-input:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
+.password-input input:focus-visible { outline: none; }
+.password-input button { display: grid; place-items: center; flex-shrink: 0; width: 46px; border: 0; background: transparent; color: var(--muted-foreground); cursor: pointer; }
+.password-field small { color: var(--muted-foreground); }
+.auth-card button:disabled { opacity: .65; cursor: wait; }
 .linkedin-button { width: min(100%, 420px); justify-content: center; border: 1px solid var(--border); background: #0a66c2; color: white; }
 .full-lesson { max-width: 78ch; margin: 0 auto; line-height: 1.8; }
 .full-lesson h4 { font-size: 1.15rem; margin: 2rem 0 .6rem; }
